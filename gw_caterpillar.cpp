@@ -337,8 +337,8 @@ bool DrawCaterpillar(GraphWin& gw, const node_array<node>& sibling,
            x -= b / 4;
            dist = 3 * b / 4;
        }
-       else
-         DrawLeaves(G,sibling,v,x,y,dist,pos,on_path);
+       
+	   DrawLeaves(G,sibling,v,x,y,dist,pos,on_path);
 
        pos[w]  = pos[v].translate(a+b,0);
        pos[ws] = pos[vs].translate(a+b,0);
