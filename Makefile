@@ -4,7 +4,11 @@ PROGS = gw_gabriel1.exe gw_caterpillar1.exe
 OBJECTS = mwg_drawing.obj
 
 L       = LEDA
-OPTS    = -nologo -MT
+
+
+#OPTS    = -nologo -MT
+OPTS    = -nologo -MT -DWINMAIN
+
 SYSLIBS = user32.lib gdi32.lib msimg32.lib comdlg32.lib shell32.lib advapi32.lib wsock32.lib
 
 .cpp.obj: 
