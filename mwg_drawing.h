@@ -1,8 +1,12 @@
 
 #include <LEDA/graph/graph.h>
 #include <LEDA/geo/point.h>
+#include <LEDA/core/tuple.h>
+
 
 namespace leda {
+
+typedef two_tuple<node,node> node_pair;
 
 extern bool DrawCaterpillar(const graph& G, 
                             const node_array<node>& sibling,
@@ -20,5 +24,19 @@ extern bool DrawCaterpillar(const graph& G,
   // returns false if G is not a (two fold) caterpillar graph 
   // and true otherwise
 
-}
 
+extern void MWG_TEST(const graph& G, 
+                     const node_array<int>& comp,
+                     const node_array<point>& pos,
+                     edge_array<bool>& blocked, 
+                     list<node_pair>& missing_edges);
+
+  // Input: a graph G consisting of two components
+  // For all nodes v in the first  component comp[v] = 0
+  // For all nodes v in the second component comp[v] = 1
+  // pos[v] = position of v
+
+  // marks edges as blocked if blocked by some node in the other component 
+  // and computes list of missing edges (unblocked node pairs)
+
+}

@@ -1,5 +1,5 @@
 #include "mwg_drawing.h"
-
+#include <LEDA/core/tuple.h>
 
 LEDA_BEGIN_NAMESPACE
 
@@ -351,6 +351,88 @@ bool DrawCaterpillar(const graph& G,
 
    return true;
 }
+
+
+// test
+
+static node test_edge(const graph& G, 
+                      const node_array<int>& comp,
+                      const node_array<point>& pos, node u, node v)
+{ 
+  // returns a node x that is blocking (potential) edge (u,v)
+  // or nil if no such node exists
+
+  // for all nodes v in the first  component comp[v] = 0
+  // for all nodes v in the second component comp[v] = 1
+
+  assert(comp[u] == comp[v]);
+
+  point a = pos[u];
+  point b = pos[v];
+  point c = midpoint(a, b);
+  double sqdist = c.sqr_dist(a);
+
+  node result = 0;
+
+  node x;
+  forall_nodes(x,G)
+  { if (comp[x] == comp[u]) continue;
+      point p = pos[x];
+      if (c.sqr_dist(p) <= sqdist) {
+        result = x;
+        break;
+      }
+  }
+  return result;
+}
+
+
+void MWG_TEST(const graph& G, 
+              const node_array<int>& comp,
+              const node_array<point>& pos,
+              edge_array<bool>& blocked, 
+              list<node_pair>& missing_edges)
+{ 
+  // for all nodes v in the first  component comp[v] = 0
+  // for all nodes v in the second component comp[v] = 1
+  // pos[v] = position of v
+
+  // marks edges as blocked if blocked by some node in the other component 
+  // computes list of missing edges (unblocked node pairs)
+
+
+  edge e;
+  forall_edges(e,G) 
+  { node u = G.source(e);
+    node v = G.target(e);
+    if (test_edge(G,comp,pos,u,v) == nil)
+     blocked[e] = false;
+    else
+     blocked[e] = true;
+  }
+
+  // compute missing edges
+
+  missing_edges.clear();
+
+  node v;
+  forall_nodes(v,G) 
+  { node_array<bool> adjacent(G,false);
+    adjacent[v] = true;
+    edge x;
+    forall_inout_edges(x,v) 
+    { node w = G.opposite(x,v);
+      adjacent[w] = true;
+    }
+
+    for(node w = G.succ_node(v); w; w = G.succ_node(w))
+    { if (adjacent[w] || comp[v] != comp[w]) continue;
+      if (test_edge(G,comp,pos,v,w) == nil) 
+         missing_edges.append(node_pair(v,w));
+    }
+  }
+}
+
 
 LEDA_END_NAMESPACE
 

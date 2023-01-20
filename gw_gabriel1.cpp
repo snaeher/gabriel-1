@@ -1,63 +1,16 @@
-/*******************************************************************************
-+
-+  LEDA 6.6.1  
-+
-+
-+  gw_gabriel.c
-+
-+
-+  Copyright (c) 1995-2020
-+  by Algorithmic Solutions Software GmbH
-+  All rights reserved.
-+ 
-*******************************************************************************/
-
-
 #include <LEDA/graph/graph.h>
 #include <LEDA/graphics/graphwin.h>
-#include <LEDA/core/b_stack.h>
+
+#include "mwg_drawing.h"
 
 using namespace leda;
 
-static node moving_node = 0;
+static color NODE_CLR_1 = yellow;
+static color NODE_CLR_2 = orange;
 
-/*
-static color CLR_1 = blue2;
-static color CLR_2 = green2;
-*/
-
-static color CLR_1 = yellow;
-static color CLR_2 = orange;
-
-node test_edge(const GraphWin& gw, node u, node v)
-{
-  graph& G = gw.get_graph();
-
-  color clr_u = gw.get_color(u);
-  color clr_v = gw.get_color(v);
-
-  if (clr_u != clr_v) return 0;
-
-
-  point a = gw.get_position(u);
-  point b = gw.get_position(v);
-  point c = midpoint(a, b);
-  double sqdist = c.sqr_dist(a);
-
-  node result = 0;
-
-  node x;
-  forall_nodes(x, G)
-  {
-      if (gw.get_color(x) == clr_u) continue;
-      point p = gw.get_position(x);
-      if (x != u && x != v && c.sqr_dist(p) <= sqdist) {
-          result = x;
-          break;
-      }
-  }
-  return result;
-}
+static color EDGE_CLR_MISSING = green;
+static color EDGE_CLR_BLOCKED = red;
+static color EDGE_CLR_OK = blue;
 
 
 void draw_gabriel(GraphWin& gw)
@@ -65,15 +18,34 @@ void draw_gabriel(GraphWin& gw)
   window& W = gw.get_window();
   graph&  G = gw.get_graph();
 
-  if (moving_node != 0) return;
-
-  node v;
-/*
-  forall_nodes(v,G) gw.set_color(v,ivory);
-*/
+  // remove all edges of color EDGE_CLR_MISSING 
+  // inserted to represent missing edges
 
   edge e;
-  forall_edges(e,G)  gw.set_color(e,blue);
+  forall_edges(e,G) {
+    if (gw.get_color(e) == EDGE_CLR_MISSING) gw.del_edge(e);
+  }
+
+  forall_edges(e,G) gw.set_color(e,EDGE_CLR_OK);
+
+
+  node_array<point> pos(G);
+  node_array<int>   comp(G);
+
+  edge_array<bool> blocked(G);
+  list<node_pair> missing_edges;
+
+  node v;
+  forall_nodes(v,G) 
+  { pos[v] = gw.get_position(v);
+
+    if (gw.get_color(v) == NODE_CLR_1) 
+      comp[v] = 0;
+    else
+      comp[v] = 1;
+   }
+
+  MWG_TEST(G,comp,pos,blocked,missing_edges);
 
   gw.clear_shapes();
 
@@ -86,66 +58,54 @@ void draw_gabriel(GraphWin& gw)
     point c = midpoint(a,b);
     circle circ(c,a);
 
-    gw.new_shape(circle(c,a),"",grey3);
-
-    node x = test_edge(gw,u,v);
-
-    if (x)
-    { gw.set_color(e,red);
-      gw.new_shape(circ,"",red);
+    if (blocked[e])
+    { gw.set_color(e,EDGE_CLR_BLOCKED);
+      gw.set_width(e,2);
+      gw.new_shape(circ,"",EDGE_CLR_BLOCKED);
+     }
+    else
+    { gw.set_color(e,EDGE_CLR_OK);
+      gw.set_width(e,2);
+      gw.new_shape(circ,"",grey3);
      }
   }
 
   // draw missing edges
 
+  node_pair n_pair;
+  forall(n_pair,missing_edges) 
+  { 
+    node v = n_pair.first();
+    node w = n_pair.second();
 
-  forall_nodes(v,G) 
-  { node_array<bool> adjacent(G,false);
-    adjacent[v] = true;
-    edge x;
-    forall_inout_edges(x,v) {
-      node w = G.opposite(x,v);
-      adjacent[w] = true;
-    }
-    node w;
-    forall_nodes(w,G) {
+    point a = gw.get_position(v);
+    point b = gw.get_position(w);
+    point c = midpoint(a,b);
 
-      if (gw.get_color(v) != gw.get_color(w)) continue;
+    edge e = gw.new_edge(v,w);
+    gw.set_color(e,EDGE_CLR_MISSING);
+    gw.set_width(e,2);
 
-      if (gw.get_color(v) == ivory) continue;
-
-      if (adjacent[w]) continue;
-
-      if (test_edge(gw,v,w) == 0)
-      { point a = gw.get_position(v);
-        point b = gw.get_position(w);
-        point c = midpoint(a,b);
-
-        double r = gw.get_radius(v);
-        W.set_node_width(W.real_to_pix(r));
-        W.set_line_width(2);
-        W.draw_edge(a,b,green2);
-        circle circ(c,a);
-        gw.new_shape(circ,"",green2);
-      }
-    }
+    circle circ(c,a);
+    gw.new_shape(circ,"",EDGE_CLR_MISSING);
   }
 
-  gw.redraw();
-
+  gw.redraw(gw.get_xmin(),gw.get_ymin(),gw.get_xmax(),gw.get_ymax());
 }
 
 
-void init_graph_handler(GraphWin& gw)   { 
-   graph& G = gw.get_graph();
 
-   if (G.empty())
-   { node a = gw.new_node(point(100,200));
-     gw.set_color(a,CLR_1);
+void init_graph_handler(GraphWin& gw)
+{ 
+  graph& G = gw.get_graph();
 
-     node b = gw.new_node(point(400,200));
-     gw.set_color(b,CLR_2);
-   }
+  if (G.empty())
+  { node a = gw.new_node(point(100,200));
+    gw.set_color(a,NODE_CLR_1);
+
+    node b = gw.new_node(point(400,200));
+    gw.set_color(b,NODE_CLR_2);
+  }
 
   gw.set_flush(false);
 
@@ -160,15 +120,11 @@ void init_graph_handler(GraphWin& gw)   {
   edge e;
   forall_edges(e,G) gw.set_width(e,1);
 
-
   draw_gabriel(gw); 
 
   gw.zoom_graph();
   gw.set_flush(true);
-
   gw.zoom(0.85);
-
-  //draw_gabriel(gw); 
 }
 
 void new_node_handler(GraphWin& gw,node){ draw_gabriel(gw); }
@@ -192,38 +148,27 @@ bool pre_new_edge_handler(GraphWin& gw,node v, node w){
 }
 
 bool start_move_node_handler(GraphWin& gw, node u)
-{ 
-  graph& G = gw.get_graph();
-
-  moving_node = u;
-
-/*
-  node v;
-  forall_nodes(v,G) gw.set_color(v,ivory);
-*/
-
+{ graph& G = gw.get_graph();
   edge e;
-  forall_edges(e,G) gw.set_color(e,black);
+  forall_edges(e,G) {
+    if (gw.get_color(e) == EDGE_CLR_MISSING) 
+      gw.del_edge(e);
+    else
+      gw.set_color(e,black);
+  }
 
   gw.clear_shapes();
   gw.redraw();
-
   return true;
 }
 
 bool end_move_node_handler(GraphWin& gw, node v, const point & pos)
-{ moving_node = 0;
-  draw_gabriel(gw);
-  gw.redraw();
+{ draw_gabriel(gw);
   return true;
 }
 
 void end_move_component_handler(GraphWin& gw, node v)
-{ moving_node = 0;
-  draw_gabriel(gw);
-  gw.redraw();
-}
-
+{ draw_gabriel(gw); }
 
 
 
@@ -233,10 +178,6 @@ int main()
 
   gw.set_start_move_node_handler(start_move_node_handler);
   gw.set_end_move_node_handler(end_move_node_handler);
-
-/*
-  gw.set_move_node_handler(end_move_node_handler);
-*/
 
   gw.set_move_component_handler(start_move_node_handler);
   gw.set_move_component_handler(end_move_component_handler);
@@ -268,10 +209,10 @@ int main()
 
 
   node a = gw.new_node(point(100,200));
-  gw.set_color(a,CLR_1);
+  gw.set_color(a,NODE_CLR_1);
 
   node b = gw.new_node(point(400,200));
-  gw.set_color(b,CLR_2);
+  gw.set_color(b,NODE_CLR_2);
 
   gw.edit();
 
