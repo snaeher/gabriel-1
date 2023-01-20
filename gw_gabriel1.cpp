@@ -75,6 +75,8 @@ void draw_gabriel(GraphWin& gw)
   edge e;
   forall_edges(e,G)  gw.set_color(e,blue);
 
+  gw.clear_shapes();
+
   forall_edges(e,G) 
   { node u = G.source(e);
     node v = G.target(e);
@@ -83,16 +85,14 @@ void draw_gabriel(GraphWin& gw)
     point b = gw.get_position(v);
     point c = midpoint(a,b);
     circle circ(c,a);
-    W.set_line_width(1);
-    W.draw_circle(circ,grey3);
+
+    gw.new_shape(circle(c,a),"",grey3);
 
     node x = test_edge(gw,u,v);
 
     if (x)
-    { 
-      gw.set_color(e,red);
-      //gw.set_color(x,red);
-      W.draw_circle(circ,red);
+    { gw.set_color(e,red);
+      gw.new_shape(circ,"",red);
      }
   }
 
@@ -125,19 +125,14 @@ void draw_gabriel(GraphWin& gw)
         W.set_node_width(W.real_to_pix(r));
         W.set_line_width(2);
         W.draw_edge(a,b,green2);
-
         circle circ(c,a);
-        W.set_line_width(1);
-        W.draw_circle(circ,green2);
+        gw.new_shape(circ,"",green2);
       }
     }
   }
 
-}
+  gw.redraw();
 
-void bg_redraw(window* wp, double xmin, double ymin, double xmax, double ymax)
-{ GraphWin* gwp = wp->get_graphwin();
-  draw_gabriel(*gwp);
 }
 
 
@@ -158,18 +153,22 @@ void init_graph_handler(GraphWin& gw)   {
   forall_nodes(v,G) {
     gw.set_width(v,15);
     gw.set_height(v,15);
-    gw.set_border_width(v,2);
+    gw.set_border_width(v,1);
+    gw.set_label_type(v,user_label);
   }
 
   edge e;
-  forall_edges(e,G) gw.set_width(e,2);
+  forall_edges(e,G) gw.set_width(e,1);
+
+
+  draw_gabriel(gw); 
 
   gw.zoom_graph();
   gw.set_flush(true);
 
   gw.zoom(0.85);
 
-  draw_gabriel(gw); 
+  //draw_gabriel(gw); 
 }
 
 void new_node_handler(GraphWin& gw,node){ draw_gabriel(gw); }
@@ -193,7 +192,8 @@ bool pre_new_edge_handler(GraphWin& gw,node v, node w){
 }
 
 bool start_move_node_handler(GraphWin& gw, node u)
-{ graph& G = gw.get_graph();
+{ 
+  graph& G = gw.get_graph();
 
   moving_node = u;
 
@@ -205,16 +205,23 @@ bool start_move_node_handler(GraphWin& gw, node u)
   edge e;
   forall_edges(e,G) gw.set_color(e,black);
 
+  gw.clear_shapes();
+  gw.redraw();
+
   return true;
 }
 
 bool end_move_node_handler(GraphWin& gw, node v, const point & pos)
 { moving_node = 0;
+  draw_gabriel(gw);
+  gw.redraw();
   return true;
 }
 
 void end_move_component_handler(GraphWin& gw, node v)
 { moving_node = 0;
+  draw_gabriel(gw);
+  gw.redraw();
 }
 
 
@@ -224,10 +231,12 @@ int main()
 {
   GraphWin gw("Gabriel Demo");
 
-  gw.set_bg_redraw(bg_redraw);
-
   gw.set_start_move_node_handler(start_move_node_handler);
   gw.set_end_move_node_handler(end_move_node_handler);
+
+/*
+  gw.set_move_node_handler(end_move_node_handler);
+*/
 
   gw.set_move_component_handler(start_move_node_handler);
   gw.set_move_component_handler(end_move_component_handler);
@@ -245,16 +254,18 @@ int main()
   gw.set_action(A_LEFT | A_DRAG | A_FRAME,NULL);
   gw.set_action(A_LEFT | A_DRAG | A_EDGE,NULL);
 
+
   gw.set_node_label_type(user_label);
 
-  //gw.set_node_radius(6);
   gw.set_node_width(15);
-
-  gw.set_edge_width(2);
+  gw.set_node_height(15);
+  gw.set_edge_width(1);
+  gw.set_node_border_width(1);
 
   gw.set_zoom_objects(false);
 
   gw.display();
+
 
   node a = gw.new_node(point(100,200));
   gw.set_color(a,CLR_1);

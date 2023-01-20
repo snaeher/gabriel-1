@@ -258,10 +258,11 @@ struct __exportC edge_info
 };
 
 
-struct cluster_box
+struct shape
 {
 
- polygon shape;
+ polygon poly;
+ circle  circ;
 
  string label;
  color  bcol;
@@ -271,13 +272,13 @@ struct cluster_box
  int         lwidth;
  line_style  lstyle;
 
- cluster_box() {}
+ shape() {}
 
- cluster_box(const polygon& pol, string l, color bc, color fc, 
+ shape(const polygon& pol, string l, color bc, color fc, 
                                            color tc, int lw, line_style ls)
- : shape(pol),label(l),bcol(bc),fcol(fc),tcol(tc), lwidth(lw),lstyle(ls) {}
+ : poly(pol),label(l),bcol(bc),fcol(fc),tcol(tc), lwidth(lw),lstyle(ls) {}
 
- cluster_box(double x0, double y0, double x1, double y1, string l, 
+ shape(double x0, double y0, double x1, double y1, string l, 
              color bc, color fc, color tc, int lw, line_style ls)
  : label(l),bcol(bc),fcol(fc),tcol(tc), lwidth(lw),lstyle(ls) 
  { 
@@ -289,12 +290,16 @@ struct cluster_box
    L.append(point(x1,y0));
    L.append(point(x1,y1));
    L.append(point(x0,y1));
-   shape = polygon(L);
+   poly = polygon(L);
   }
 
+ shape(const circle& C, string l, color bc, color fc, 
+                                        color tc, int lw, line_style ls)
+ : circ(C),label(l),bcol(bc),fcol(fc),tcol(tc), lwidth(lw),lstyle(ls) {}
 
- friend ostream& operator<<(ostream& ostr, const cluster_box&) { return ostr; }
- friend istream& operator>>(istream& istr, cluster_box&) { return istr; }
+
+ friend ostream& operator<<(ostream& ostr, const shape&) { return ostr; }
+ friend istream& operator>>(istream& istr, shape&) { return istr; }
 
 };
 
@@ -425,9 +430,9 @@ gw_edge_dir   = { undirected_edge, directed_edge, bidirected_edge, rdirected_edg
     friend class __exportC gw_observer;
     friend class __exportC graphwin_undo;
 
-    list<cluster_box> cluster_list;
-    const list<cluster_box>& get_clusters() { return cluster_list; }
-    void draw_clusters();
+    list<shape> shape_list;
+    const list<shape>& get_shapes() { return shape_list; }
+    void draw_shapes();
 
     graphwin_undo *gw_undo;
 
@@ -2219,6 +2224,7 @@ void set_split_edge_handler(void (*f)(GraphWin&,node)=NULL);
 void set_move_component_handler(bool (*f)(GraphWin&,node));
 void set_move_component_handler(void (*f)(GraphWin&,node)=NULL);
     
+
 void set_init_graph_handler(bool (*f)(GraphWin&));
 /*{\Mopl	$f$ is called every time before the entire graph is replaced,
 		e.g. by a clear, generate, or load operation. }*/
@@ -2483,23 +2489,30 @@ void set_graph(graph& G);
 /*{\Mop makes |G| the graph of |\Mvar|. }*/
 
 
-void new_cluster(const polygon& pol,
+void new_shape(const polygon& pol,
                  string label, color border_c, color fill_c = invisible, 
                  color text_c = black, int lw = 1, line_style ls = solid) 
 { 
-  cluster_list.append(cluster_box(pol,label,border_c,fill_c,text_c,lw,ls)); 
+  shape_list.append(shape(pol,label,border_c,fill_c,text_c,lw,ls)); 
  }
 
 
-void new_cluster(double x0, double y0, double x1, double y1, 
+void new_shape(double x0, double y0, double x1, double y1, 
                  string label, color border_c, color fill_c = invisible, 
                  color text_c = black, int lw = 1, line_style ls = solid) 
 { 
-  cluster_list.append(cluster_box(x0,y0,x1,y1,label,
+  shape_list.append(shape(x0,y0,x1,y1,label,
                                   border_c,fill_c,text_c,lw,ls)); 
  }
 
-void del_all_clusters() { cluster_list.clear(); }
+void new_shape(const circle& C,
+                 string label, color border_c, color fill_c = invisible, 
+                 color text_c = black, int lw = 1, line_style ls = solid) 
+{ 
+  shape_list.append(shape(C,label,border_c,fill_c,text_c,lw,ls)); 
+}
+
+void clear_shapes() { shape_list.clear(); /* if (flush) redraw(); */ }
 
                
 bool get_directed() const  { return get_edge_direction()==directed_edge; }
