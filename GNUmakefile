@@ -3,7 +3,6 @@
 PROGS = gw_gabriel1 gw_caterpillar1
 OBJECTS = mwg_drawing.o
 
-
 sys = $(shell leda.sys)
 
 L       = $(LEDA)/LINK/$(sys)/g++
@@ -18,6 +17,7 @@ SYSLIBS = -lX11 -lXft
 
 all: $(OBJECTS) $(PROGS)
 
+$(PROGS): $(OBJECTS)
 
 clean: 
 	rm -f *.o $(PROGS)
