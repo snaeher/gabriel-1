@@ -54,11 +54,9 @@ int main()
 
   window& W = gw.get_window();
 
-  double x = 0;
-  double y = 0;
-
   while (gw.get_graph().empty())
-  { gw.message("Draw or load a caterpillar graph and click 'done' to duplicate the graph.");
+  { // run edit loop as long graph is empty
+    gw.message("Draw or load a caterpillar graph and click 'done' to duplicate the graph.");
     if (!gw.edit()) return 1;
    } 
 
@@ -66,66 +64,73 @@ int main()
   graph& G = gw.get_graph();
   int n = G.number_of_nodes();
 
-
+  // make a copy G1 of G and join the two components
   graph G1 = G;
   G.join(G1);
 
-  array<node> V(2*n);
-  int i = 0;
+  // tell GraphWin that G has changed
+  gw.update_graph();
 
-  node v;
-  forall_nodes(v,G) V[i++] = v;
+  // compute corresponding nodes (siblings)
+  // and place them below the original nodes
 
   node_array<node> sibling(G,nil);
 
-  gw.update_graph();
+  array<node> V(2*n); // array of all nodes V[i] = node with index i
 
-  gw.set_flush(false);
+  node v;
+  forall_nodes(v,G) V[G.index(v)] = v;
 
-  i = 0;
-  forall_nodes(v,G) {
+  forall_nodes(v,G) 
+  { int i = G.index(v);
     if (i < n)
+    { // v lies in first component (original node) and has sibling i+n
+      // define sibling (i+n) and set color to yellow
       sibling[v] = V[i+n];
+      gw.set_color(v,yellow);
+    }
     else
-    { node u = V[i-n];
-      //sibling[v] = u;
+    { // v lies in second component (new node) and has sibling nil
+      // place it below the original node u (i-n) and set color to orange
+      node u = V[i-n];
+      sibling[v] = nil;
       point pos = gw.get_position(u);
       gw.set_position(v,pos.translate(0,-100));
+      gw.set_color(v,orange);
      }
-    i++;
   }
 
-  gw.set_flush(true);
-
-  //gw.center_graph();
   gw.zoom_graph();
 
   gw.message("Click 'done' to compute a mutual witness gabriel drawing.");
   gw.edit();
 
+
+
+  // try to draw G as mutual witness gabriel graph by calling DrawCaterpillar
+
   node_array<point> pos(G);
 
+  double x = 0;
+  double y = 0;
   double h = 1;
 
   if (DrawCaterpillar(G,sibling,x,y,h,pos))
-  { node v;
+  { 
+    // show computed layout
+    set_layout(gw,pos);
+
+    // print coordinates to cout
+    node v;
     forall_nodes(v,G) {
       double x = pos[v].xcoord();
       double y = pos[v].ycoord();
       cout << string("%2d:  %6.2f  %6.2f",G.index(v),x,y) << endl;
-      node u = sibling[v];
-      //if (u) pos[u] = pos[u].translate(0,-10);
-      if (u) 
-        gw.set_color(v,yellow);
-      else
-        gw.set_color(v,orange);
     }
-
-    set_layout(gw,pos);
   }
   else {
     // something went wrong
-    cout << "ERROR" << endl;
+    cout << "ERROR: G is not two-fold caterpillar graph." << endl;
   }
 
 
