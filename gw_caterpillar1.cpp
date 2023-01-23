@@ -59,11 +59,13 @@ int main()
    } 
 
 
-  int n = G.number_of_nodes(); // original number of nodes
+  //int n = G.number_of_nodes();
+  int n = G.max_node_index()+1; // original number of nodes
 
   // make a copy G1 of G and join the two components
   graph G1 = G;
   G.join(G1);
+
 
   // tell GraphWin that G has changed
   gw.update_graph();

@@ -127,6 +127,7 @@ void init_graph_handler(GraphWin& gw)
   gw.zoom(0.85);
 }
 
+
 void new_node_handler(GraphWin& gw,node){ draw_gabriel(gw); }
 void new_edge_handler(GraphWin& gw,edge){ draw_gabriel(gw); }
 void del_edge_handler(GraphWin& gw)     { draw_gabriel(gw); }
@@ -183,6 +184,7 @@ int main()
   gw.set_move_component_handler(end_move_component_handler);
 
   gw.set_init_graph_handler(init_graph_handler);
+
   gw.set_new_edge_handler(new_edge_handler);
   gw.set_del_edge_handler(del_edge_handler);
   gw.set_new_node_handler(new_node_handler);
@@ -194,6 +196,8 @@ int main()
 
   gw.set_action(A_LEFT | A_DRAG | A_FRAME,NULL);
   gw.set_action(A_LEFT | A_DRAG | A_EDGE,NULL);
+
+  gw.set_default_menu(M_COMPLETE & ~M_UNDO);
 
 
   gw.set_node_label_type(user_label);

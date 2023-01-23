@@ -5,8 +5,12 @@ OBJECTS = mwg_drawing.o
 
 sys = $(shell leda.sys)
 
-L       = $(LEDA)/LINK/$(sys)/g++
-OPTS    = -O2 -fno-strict-aliasing
+L    = $(LEDA)/LINK/$(sys)/g++
+OPTS = -O2 -fno-strict-aliasing
+
+#L    = $(LEDA)/LINK/$(sys)/gdb
+#OPTS = -g
+
 SYSLIBS = -lX11 -lXft
 
 .cpp.o: 
