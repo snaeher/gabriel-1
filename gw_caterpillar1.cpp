@@ -6,38 +6,31 @@ using namespace leda;
 
 void set_layout(GraphWin& gw, node_array<point>& pos)
 {
-  //gw.set_layout(pos);
-
   graph& G = gw.get_graph();
-  window& W = gw.get_window();
-
-  node_array<double> radius(G);
-  edge_array<list<point> > bends(G);
-  edge_array<point> anchor(G);
 
   node v;
   forall_nodes(v,G) {
-    radius[v] = W.pix_to_real(10);
-    gw.set_border_width(v,2);
+    gw.set_width(v,16);
+    gw.set_height(v,16);
+    gw.set_border_width(v,1);
+    gw.set_label_type(v,user_label);
   }
 
   edge e;
   forall_edges(e,G) {
-    gw.set_width(e,2);
+    gw.set_width(e,1);
     gw.set_direction(e,undirected_edge);
   }
 
-  gw.set_layout(pos,radius,radius,bends,anchor,anchor);
-
+  gw.set_layout(pos);
   gw.zoom_graph();
   gw.zoom(0.85);
-
-  gw.center_graph();
 }
 
-void init_handler(GraphWin& gw) {
-   // called after graph is loaded from file
-   gw.zoom_graph();
+
+void init_handler(GraphWin& gw) 
+{ // called after graph is loaded from file
+  gw.zoom_graph();
 }
   
 
@@ -46,13 +39,18 @@ int main()
   GraphWin gw("Caterpillar 1");
 
   gw.win_init(0,200,0);
-  gw.set_node_radius(4);
-  gw.set_zoom_objects(false);
+
   gw.set_init_graph_handler(init_handler);
+  gw.set_zoom_objects(false);
 
   gw.display();
 
-  window& W = gw.get_window();
+  gw.set_node_width(48);
+  gw.set_node_height(48);
+  gw.set_node_border_width(1);
+
+
+  graph& G = gw.get_graph();
 
   while (gw.get_graph().empty())
   { // run edit loop as long graph is empty
@@ -61,8 +59,7 @@ int main()
    } 
 
 
-  graph& G = gw.get_graph();
-  int n = G.number_of_nodes();
+  int n = G.number_of_nodes(); // original number of nodes
 
   // make a copy G1 of G and join the two components
   graph G1 = G;
@@ -71,6 +68,8 @@ int main()
   // tell GraphWin that G has changed
   gw.update_graph();
 
+
+  // now G has 2*n nodes
   // compute corresponding nodes (siblings)
   // and place them below the original nodes
 
@@ -80,6 +79,8 @@ int main()
 
   node v;
   forall_nodes(v,G) V[G.index(v)] = v;
+
+  gw.set_flush(false);
 
   forall_nodes(v,G) 
   { int i = G.index(v);
@@ -95,10 +96,12 @@ int main()
       node u = V[i-n];
       sibling[v] = nil;
       point pos = gw.get_position(u);
-      gw.set_position(v,pos.translate(0,-100));
+      gw.set_position(v,pos.translate(0,-60));
       gw.set_color(v,orange);
      }
   }
+
+  gw.set_flush(true);
 
   gw.zoom_graph();
 
@@ -133,9 +136,9 @@ int main()
     cout << "ERROR: G is not two-fold caterpillar graph." << endl;
   }
 
-
   gw.message("A mutual witness gabriel drawing");
   gw.edit();
+
 
   gw.message("Save Drawing to a File.");
   string gname = gw.get_graphname();
