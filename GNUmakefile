@@ -24,5 +24,5 @@ all: $(OBJECTS) $(PROGS)
 $(PROGS): $(OBJECTS)
 
 clean: 
-	rm -f *.o $(PROGS)
+	rm -f *.o *.obj *.exe $(PROGS)
 

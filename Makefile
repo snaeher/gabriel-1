@@ -3,10 +3,10 @@
 PROGS = gw_gabriel1.exe gw_caterpillar1.exe
 OBJECTS = mwg_drawing.obj
 
-L     = LEDA
+L  = LEDA-7
 
 #OPTS = -nologo -MT -DWINMAIN
-OPTS  = -nologo -MT
+OPTS  = -nologo -MT 
 
 SYSLIBS = user32.lib gdi32.lib msimg32.lib comdlg32.lib shell32.lib advapi32.lib wsock32.lib
 
@@ -14,7 +14,7 @@ SYSLIBS = user32.lib gdi32.lib msimg32.lib comdlg32.lib shell32.lib advapi32.lib
 	cl $(OPTS) -I $L/incl -c $*.cpp 
 
 .cpp.exe:
-        cl $(OPTS) -I $L/incl $*.cpp $(OBJECTS) $L/leda.lib $(SYSLIBS)
+	cl $(OPTS) -I $L/incl $*.cpp $(OBJECTS) $L/leda.lib $(SYSLIBS)
 
 
 all: $(OBJECTS) $(PROGS)
